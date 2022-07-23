@@ -1,0 +1,130 @@
+---
+title: "MLR_Quiz-1"
+author: "Dana Elliott"
+date: '2022-07-13'
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(glmnet)
+library(GGally)
+library(ggcorrplot)
+library(MASS)
+library(car)
+library(lubridate)
+library(lmtest)
+library(splines)
+```
+
+```{r}
+bike = read_csv("bike_cleaned.csv")
+```
+```{r}
+summary(bike)
+```
+```{r}
+bike = bike %>%mutate(dteday = mdy(dteday))
+```
+
+```{r}
+bike = bike %>% mutate_if(is.character, as_factor)
+```
+
+```{r}
+bike = bike %>% mutate(hr = as_factor(hr))
+```
+
+```{r}
+ggcorr(bike, label = TRUE, label_round = 3)
+```
+
+```{r} 
+ggplot(bike, aes(x=hr, y=count)) +
+  geom_boxplot() +
+  theme_bw()
+```
+```{r}
+ggplot(bike,aes(x=season,y=count))+
+  geom_boxplot()
+```
+```{r}
+bike_recipe = recipe(count ~ hr, bike)
+
+lm_model = linear_reg() %>%
+  set_engine("lm")
+
+lm_wflow = workflow()%>%
+  add_model(lm_model)%>%
+  add_recipe(bike_recipe)
+
+lm_fit = fit(lm_wflow, bike)
+
+summary(lm_fit$fit$fit$fit)
+```
+```{r}
+ggplot(bike, aes(x=temp,y=count)) +
+  geom_point()
+```
+```{r}
+bike_recipe1 = recipe(count ~ hr + temp, bike)
+lm_model = linear_reg() %>%
+  set_engine("lm")
+
+lm_wflow = workflow() %>%
+  add_model(lm_model) %>%
+  add_recipe(bike_recipe1)
+
+lm_fit2 = fit(lm_wflow, bike)
+
+summary(lm_fit2$fit$fit$fit)
+```
+```{r}
+bike_recipe2 = recipe(count ~ temp + atemp, bike)
+```
+
+```{r}
+lm_model = linear_reg() %>%
+  
+set_engine("lm")
+
+lm_wflow = workflow() %>%
+  add_model(lm_model) %>%
+  add_recipe(bike_recipe2)
+
+lm_fit3 = fit(lm_wflow, bike)
+
+summary(lm_fit3$fit$fit$fit)
+```
+```{r}
+allmod = lm(count ~ season + mnth + hr + holiday + weekday + workingday + weathersit + temp + atemp + hum + windspeed, bike)
+summary(allmod)
+```
+
